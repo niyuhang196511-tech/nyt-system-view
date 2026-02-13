@@ -33,6 +33,7 @@ export function useFormSchema(): VbenFormSchema[] {
         valueField: 'id',
         allowClear: true,
         placeholder: '请选择模型',
+        debug: true,
       },
       rules: 'required',
     },

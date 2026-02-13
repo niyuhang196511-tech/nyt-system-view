@@ -8,8 +8,10 @@ export namespace SiteProductCategoryAPI {
     id: number;
     langs: ProductCategoryLang[];
     // 拓展以下两个字段 用于表格展示
-    zhCN_name?: string;
-    enUS_name?: string;
+  }
+
+  export interface ProductCategoryVO extends ProductCategory {
+    name?: string;
   }
 
   export interface ProductCategoryLang {
@@ -21,6 +23,15 @@ export namespace SiteProductCategoryAPI {
 }
 
 const PRODUCT_CATEGORY_BASE_URL = '/site/product-category';
+
+/**
+ * 查询所有产品分类
+ */
+export function getProductCategoryAll() {
+  return requestClient.get<Array<SiteProductCategoryAPI.ProductCategory>>(
+    `${PRODUCT_CATEGORY_BASE_URL}/all`,
+  );
+}
 
 /**
  * 查询产品分类列表

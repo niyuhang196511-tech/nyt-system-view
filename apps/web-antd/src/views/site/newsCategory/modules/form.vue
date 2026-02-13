@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { SupportedLanguagesType } from '@vben/locales';
 
-import type { SiteProductCategoryAPI } from '#/api/site/productCategory';
+import type { SiteNewsCategoryAPI } from '#/api/site/newsCategory';
 
 import { computed, ref, useTemplateRef } from 'vue';
 
@@ -11,10 +11,10 @@ import { message, Tabs } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
 import {
-  createProductCategory,
-  getProductCategory,
-  updateProductCategory,
-} from '#/api/site/productCategory';
+  createNewsCategory,
+  getNewsCategory,
+  updateNewsCategory,
+} from '#/api/site/newsCategory';
 import { $t } from '#/locales';
 
 import { useModelFormSchema } from '../data';
@@ -35,8 +35,8 @@ const enUSFormRef = useTemplateRef<LangFormInstance>('enUSFormRef');
 const formData = ref<SiteProductCategoryAPI.ProductCategory>();
 const getTitle = computed(() => {
   return formData.value?.id
-    ? $t('ui.actionTitle.edit', ['产品分类'])
-    : $t('ui.actionTitle.create', ['产品分类']);
+    ? $t('ui.actionTitle.edit', ['新闻资讯分类'])
+    : $t('ui.actionTitle.create', ['新闻资讯类']);
 });
 
 const [Form, formApi] = useVbenForm({
@@ -81,14 +81,14 @@ const [Modal, modalApi] = useVbenModal({
     if (!data.langs) data.langs = [];
     // 子表数据
     data.langs[0] =
-      (await zhCNFormRef.value?.getValues()) as SiteProductCategoryAPI.ProductCategoryLang;
+      (await zhCNFormRef.value?.getValues()) as SiteNewsCategoryAPI.NewsCategoryLang;
     data.langs[1] =
-      (await enUSFormRef.value?.getValues()) as SiteProductCategoryAPI.ProductCategoryLang;
+      (await enUSFormRef.value?.getValues()) as SiteNewsCategoryAPI.NewsCategoryLang;
 
     try {
       await (formData.value?.id
-        ? updateProductCategory(data)
-        : createProductCategory(data));
+        ? updateNewsCategory(data)
+        : createNewsCategory(data));
 
       // 关闭并提示
       await modalApi.close();
@@ -104,12 +104,12 @@ const [Modal, modalApi] = useVbenModal({
       return;
     }
     // 加载数据
-    let data = modalApi.getData<SiteProductCategoryAPI.ProductCategory>();
+    let data = modalApi.getData<SiteNewsCategoryAPI.NewsCategory>();
     if (!data) return;
     if (data.id) {
       modalApi.lock();
       try {
-        data = await getProductCategory(data.id);
+        data = await getNewsCategory(data.id);
       } finally {
         modalApi.unlock();
       }

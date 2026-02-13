@@ -1,5 +1,164 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import type { ActionItem, VxeTableGridOptions } from '#/adapter/vxe-table';
+import type { SiteProductCategoryAPI } from '#/api/site/productCategory';
+
+import { Page, useVbenModal } from '@vben/common-ui';
+import { $t } from '@vben/locales';
+
+import { message, Switch } from 'ant-design-vue';
+
+import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import {
+  deleteProduct,
+  getProductList,
+  updateProductRecommend,
+} from '#/api/site/product';
+import { productListToVOList } from '#/views/site/product/utils';
+
+import { useGridColumns, useGridFormSchema } from './data';
+import Form from './modules/form.vue';
+
+const [FormModal, formModalApi] = useVbenModal({
+  connectedComponent: Form,
+  destroyOnClose: true,
+});
+
+const [Grid, gridApi] = useVbenVxeGrid({
+  formOptions: {
+    schema: useGridFormSchema(),
+  },
+  gridOptions: {
+    columns: useGridColumns(),
+    height: 'auto',
+    keepSource: true,
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }, formValues) => {
+          const data = await getProductList({
+            pageNo: page.currentPage,
+            pageSize: page.pageSize,
+            ...formValues,
+          });
+
+          data.list = productListToVOList(data.list);
+
+          return data;
+        },
+      },
+    },
+    rowConfig: {
+      keyField: 'id',
+      isHover: true,
+    },
+    toolbarConfig: {
+      refresh: true,
+      search: true,
+    },
+  } as VxeTableGridOptions<SiteProductCategoryAPI.ProductCategory>,
+});
+
+/**
+ * 刷新表格
+ */
+function handleRefresh() {
+  gridApi.query();
+}
+
+/**
+ * 创建产品分类
+ */
+async function handleCreate() {
+  formModalApi.setData(null).open();
+}
+
+/**
+ * 修改产品分类
+ * @param row 产品分类信息
+ */
+async function handleEdit(row: SiteProductCategoryAPI.ProductCategory) {
+  formModalApi.setData(row).open();
+}
+
+async function handleDelete(row: SiteProductCategoryAPI.ProductCategory) {
+  const hideLoading = message.loading({
+    content: $t('ui.actionMessage.deleting', [row.id]),
+    duration: 0,
+  });
+  try {
+    await deleteProduct(row.id!);
+    message.success($t('ui.actionMessage.deleteSuccess', [row.id]));
+    handleRefresh();
+  } finally {
+    hideLoading();
+  }
+}
+
+async function handleRecommendChange(
+  row: SiteProduct.ProductUpdateRecommend,
+  state: boolean,
+) {
+  await updateProductRecommend({ id: row.id!, recommend: state });
+  handleRefresh();
+}
+
+/**
+ * toolbar动作
+ */
+const toolbarActions: ActionItem[] = [
+  {
+    label: $t('ui.actionTitle.create', ['产品分类']),
+    type: 'primary',
+    icon: ACTION_ICON.ADD,
+    onClick: handleCreate,
+  },
+];
+
+/**
+ * 获取table动作
+ * @param row
+ */
+function getTableAction(
+  row: SiteProductCategoryAPI.ProductCategory,
+): ActionItem[] {
+  return [
+    {
+      label: $t('common.edit'),
+      type: 'link',
+      icon: ACTION_ICON.EDIT,
+      onClick: handleEdit.bind(null, row),
+    },
+    {
+      label: $t('common.delete'),
+      type: 'link',
+      danger: true,
+      icon: ACTION_ICON.DELETE,
+      popConfirm: {
+        title: $t('ui.actionMessage.deleteConfirm', [row.id]),
+        confirm: handleDelete.bind(null, row),
+      },
+    },
+  ];
+}
+</script>
 
 <template>
-  <h1>Product</h1>
+  <Page auto-content-height>
+    <FormModal @success="handleRefresh" />
+
+    <Grid table-title="产品列表">
+      <template #toolbar-tools>
+        <TableAction :actions="toolbarActions" />
+      </template>
+      <template #actions="{ row }">
+        <TableAction :actions="getTableAction(row)" />
+      </template>
+
+      <template #recommend="{ row }">
+        <Switch
+          v-model:checked="row.recommend"
+          @change="(state: boolean) => handleRecommendChange(row, state)"
+        />
+      </template>
+    </Grid>
+  </Page>
 </template>

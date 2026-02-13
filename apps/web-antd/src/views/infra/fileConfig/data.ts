@@ -140,6 +140,20 @@ export function useFormSchema(): VbenFormSchema[] {
     },
     // S3
     {
+      fieldName: 'config.clientType',
+      label: 'S3客户端',
+      component: 'Select',
+      componentProps: {
+        options: getDictOptions(DICT_TYPE.INFRA_STORAGE_S3_CLIENT, 'number'),
+        placeholder: '请选择客户端类型',
+      },
+      rules: 'required',
+      dependencies: {
+        triggerFields: ['storage'],
+        show: (formValues) => formValues.storage === 20,
+      },
+    },
+    {
       fieldName: 'config.endpoint',
       label: '节点地址',
       component: 'Input',

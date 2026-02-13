@@ -16,58 +16,43 @@ type OptionsItem = {
   children?: OptionsItem[];
   disabled?: boolean;
   label?: string;
-  value?: string;
+  value?: any;
 };
 
 interface Props {
-  /** 组件 */
   component: Component;
-  /** 是否将value从数字转为string */
   numberToString?: boolean;
-  /** 获取options数据的函数 */
   api?: (arg?: any) => Promise<OptionsItem[] | Record<string, any>>;
-  /** 传递给api的参数 */
   params?: Record<string, any>;
-  /** 从api返回的结果中提取options数组的字段名 */
   resultField?: string;
-  /** label字段名 */
   labelField?: string;
-  /** children字段名，需要层级数据的组件可用 */
   childrenField?: string;
-  /** value字段名 */
   valueField?: string;
-  /** 组件接收options数据的属性名 */
   optionsPropName?: string;
-  /** 是否立即调用api */
   immediate?: boolean;
-  /** 每次`visibleEvent`事件发生时都重新请求数据 */
   alwaysLoad?: boolean;
-  /** 在api请求之前的回调函数 */
+  // eslint-disable-next-line vue/require-default-prop
   beforeFetch?: AnyPromiseFunction<any, any>;
-  /** 在api请求之后的回调函数 */
+  // eslint-disable-next-line vue/require-default-prop
   afterFetch?: AnyPromiseFunction<any, any>;
-  /** 直接传入选项数据，也作为api返回空数据时的后备数据 */
   options?: OptionsItem[];
-  /** 组件的插槽名称，用来显示一个"加载中"的图标 */
   loadingSlot?: string;
-  /** 触发api请求的事件名 */
   visibleEvent?: string;
-  /** 组件的v-model属性名，默认为modelValue。部分组件可能为value */
   modelPropName?: string;
-  /**
-   * 自动选择
-   * - `first`：自动选择第一个选项
-   * - `last`：自动选择最后一个选项
-   * - `one`: 当请求的结果只有一个选项时，自动选择该选项
-   * - 函数：自定义选择逻辑，函数的参数为请求的结果数组，返回值为选择的选项
-   * - false：不自动选择(默认)
-   */
   autoSelect?:
     | 'first'
     | 'last'
     | 'one'
     | ((item: OptionsItem[]) => OptionsItem)
     | false;
+  allowCreate?: boolean;
+  // eslint-disable-next-line vue/require-default-prop
+  createOption?: (
+    searchTerm: string,
+    existingOptions: OptionsItem[],
+  ) => null | OptionsItem | undefined;
+  searchEvent?: string;
+  multiple?: boolean;
 }
 
 defineOptions({ name: 'ApiComponent', inheritAttrs: false });
@@ -84,203 +69,270 @@ const props = withDefaults(defineProps<Props>(), {
   immediate: true,
   alwaysLoad: false,
   loadingSlot: '',
-  beforeFetch: undefined,
-  afterFetch: undefined,
   modelPropName: 'modelValue',
   api: undefined,
   autoSelect: false,
   options: () => [],
+  allowCreate: false,
+  searchEvent: 'onSearch',
+  multiple: false,
 });
 
 const emit = defineEmits<{
+  createOption: [OptionsItem];
   optionsChange: [OptionsItem[]];
 }>();
 
 const modelValue = defineModel<any>({ default: undefined });
 
 const attrs = useAttrs();
+const componentRef = ref();
+
 const innerParams = ref({});
 const refOptions = ref<OptionsItem[]>([]);
+const createdOptions = ref<OptionsItem[]>([]);
+const searchTerm = ref('');
+
 const loading = ref(false);
-// 首次是否加载过了
 const isFirstLoaded = ref(false);
-// 标记是否有待处理的请求
 const hasPendingRequest = ref(false);
 
-const getOptions = computed(() => {
+/* ---------------- 数据转换 ---------------- */
+
+function transformData(data: OptionsItem[]): OptionsItem[] {
   const { labelField, valueField, childrenField, numberToString } = props;
 
-  const refOptionsData = unref(refOptions);
+  return data.map((item) => {
+    const value = get(item, valueField);
+    return {
+      ...objectOmit(item, [labelField, valueField, childrenField]),
+      label: get(item, labelField),
+      value: numberToString ? `${value}` : value,
+      ...(childrenField && item[childrenField]
+        ? { children: transformData(item[childrenField]) }
+        : {}),
+    };
+  });
+}
 
-  function transformData(data: OptionsItem[]): OptionsItem[] {
-    return data.map((item) => {
-      const value = get(item, valueField);
-      return {
-        ...objectOmit(item, [labelField, valueField, childrenField]),
-        label: get(item, labelField),
-        value: numberToString ? `${value}` : value,
-        ...(childrenField && item[childrenField]
-          ? { children: transformData(item[childrenField]) }
-          : {}),
-      };
-    });
+/* ---------------- 纯 options（唯一数据源） ---------------- */
+
+function getPureOptions(): OptionsItem[] {
+  return [...createdOptions.value, ...transformData(refOptions.value)];
+}
+
+/* ---------------- 临时创建 option（仅展示） ---------------- */
+
+function getTempCreateOption(): null | OptionsItem {
+  if (!props.allowCreate || !props.createOption) return null;
+
+  const term = searchTerm.value.trim();
+  if (!term) return null;
+
+  const option = props.createOption(term, getPureOptions());
+  if (!option || option.value === undefined) return null;
+
+  return option;
+}
+
+/* ---------------- 最终 options ---------------- */
+
+const getOptions = computed<OptionsItem[]>(() => {
+  const base = getPureOptions();
+  const temp = getTempCreateOption();
+
+  if (temp && !base.some((o) => o.value === temp.value)) {
+    return [temp, ...base];
   }
 
-  const data: OptionsItem[] = transformData(refOptionsData);
-
-  return data.length > 0 ? data : props.options;
+  return base.length > 0 ? base : props.options;
 });
+
+/* ---------------- 搜索 ---------------- */
+
+function handleSearch(value: string) {
+  searchTerm.value = value;
+}
+
+/* ---------------- 保存新建 option（唯一入口） ---------------- */
+
+function saveNewOption(value: any) {
+  if (createdOptions.value.some((o) => o.value === value)) {
+    return;
+  }
+
+  const temp = getTempCreateOption();
+  if (temp && temp.value === value) {
+    createdOptions.value.push(temp);
+    emit('createOption', temp);
+  }
+}
+
+/* ---------------- 值变更 ---------------- */
+
+function handleValueChange(val: any) {
+  modelValue.value = val;
+
+  if (props.multiple && Array.isArray(val)) {
+    val.forEach((element) => {
+      saveNewOption(element);
+    });
+  } else {
+    saveNewOption(val);
+  }
+
+  nextTick(() => {
+    searchTerm.value = '';
+  });
+}
+
+/* ---------------- 绑定 props ---------------- */
 
 const bindProps = computed(() => {
   return {
     [props.modelPropName]: unref(modelValue),
     [props.optionsPropName]: unref(getOptions),
-    [`onUpdate:${props.modelPropName}`]: (val: string) => {
-      modelValue.value = val;
-    },
-    ...objectOmit(attrs, [`onUpdate:${props.modelPropName}`]),
+    [`onUpdate:${props.modelPropName}`]: handleValueChange,
+    ...(props.allowCreate && props.searchEvent
+      ? { [props.searchEvent]: handleSearch }
+      : {}),
+    ...objectOmit(attrs, [
+      `onUpdate:${props.modelPropName}`,
+      props.searchEvent,
+    ]),
     ...(props.visibleEvent
-      ? {
-          [props.visibleEvent]: handleFetchForVisible,
-        }
+      ? { [props.visibleEvent]: handleFetchForVisible }
       : {}),
   };
 });
 
+/* ---------------- API 请求 ---------------- */
+
+const mergedParams = computed(() => ({
+  ...props.params,
+  ...unref(innerParams),
+}));
+
 async function fetchApi() {
   const { api, beforeFetch, afterFetch, resultField } = props;
+  if (!api || !isFunction(api)) return;
 
-  if (!api || !isFunction(api)) {
-    return;
-  }
-
-  // 如果正在加载，标记有待处理的请求并返回
   if (loading.value) {
     hasPendingRequest.value = true;
     return;
   }
 
-  refOptions.value = [];
   try {
     loading.value = true;
-    let finalParams = unref(mergedParams);
-    if (beforeFetch && isFunction(beforeFetch)) {
-      finalParams = (await beforeFetch(cloneDeep(finalParams))) || finalParams;
+
+    let finalParams = cloneDeep(unref(mergedParams));
+    if (beforeFetch) {
+      finalParams = (await beforeFetch(finalParams)) ?? finalParams;
     }
+
     let res = await api(finalParams);
-    if (afterFetch && isFunction(afterFetch)) {
-      res = (await afterFetch(res)) || res;
+    if (afterFetch) {
+      res = (await afterFetch(res)) ?? res;
     }
+
     isFirstLoaded.value = true;
+
     if (Array.isArray(res)) {
       refOptions.value = res;
-      emitChange();
-      return;
-    }
-    if (resultField) {
+    } else if (resultField) {
       refOptions.value = get(res, resultField) || [];
     }
+
     emitChange();
   } catch (error) {
     console.warn(error);
-    // reset status
     isFirstLoaded.value = false;
   } finally {
     loading.value = false;
-    // 如果有待处理的请求，立即触发新的请求
     if (hasPendingRequest.value) {
       hasPendingRequest.value = false;
-      // 使用 nextTick 确保状态更新完成后再触发新请求
       await nextTick();
-      fetchApi();
+      await fetchApi();
     }
   }
 }
 
 async function handleFetchForVisible(visible: boolean) {
-  if (visible) {
-    if (props.alwaysLoad) {
-      await fetchApi();
-    } else if (!props.immediate && !unref(isFirstLoaded)) {
-      await fetchApi();
-    }
+  if (!visible) return;
+
+  if (props.alwaysLoad) {
+    await fetchApi();
+  } else if (!props.immediate && !isFirstLoaded.value) {
+    await fetchApi();
   }
 }
 
-const mergedParams = computed(() => {
-  return {
-    ...props.params,
-    ...unref(innerParams),
-  };
-});
-
 watch(
   mergedParams,
-  (value, oldValue) => {
-    if (isEqual(value, oldValue)) {
-      return;
+  (val, oldVal) => {
+    if (!isEqual(val, oldVal)) {
+      fetchApi();
     }
-    fetchApi();
   },
   { deep: true, immediate: props.immediate },
 );
+
+/* ---------------- 自动选中 ---------------- */
 
 function emitChange() {
   if (
     modelValue.value === undefined &&
     props.autoSelect &&
-    unref(getOptions).length > 0
+    getOptions.value.length > 0
   ) {
-    let firstOption;
+    let option: OptionsItem | undefined;
+
     if (isFunction(props.autoSelect)) {
-      firstOption = props.autoSelect(unref(getOptions));
-    } else {
-      switch (props.autoSelect) {
-        case 'first': {
-          firstOption = unref(getOptions)[0];
-          break;
-        }
-        case 'last': {
-          firstOption = unref(getOptions)[unref(getOptions).length - 1];
-          break;
-        }
-        case 'one': {
-          if (unref(getOptions).length === 1) {
-            firstOption = unref(getOptions)[0];
-          }
-          break;
-        }
-      }
+      option = props.autoSelect(getOptions.value);
+    } else if (props.autoSelect === 'first') {
+      option = getOptions.value[0];
+    } else if (props.autoSelect === 'last') {
+      option = getOptions.value.at(-1);
+    } else if (props.autoSelect === 'one' && getOptions.value.length === 1) {
+      option = getOptions.value[0];
     }
 
-    if (firstOption) modelValue.value = firstOption.value;
+    if (option) {
+      modelValue.value = props.multiple ? [option.value] : option.value;
+    }
   }
-  emit('optionsChange', unref(getOptions));
+
+  emit('optionsChange', getOptions.value);
 }
-const componentRef = ref();
+
+/* ---------------- expose ---------------- */
+
 defineExpose({
-  /** 获取options数据 */
-  getOptions: () => unref(getOptions),
-  /** 获取当前值 */
-  getValue: () => unref(modelValue),
-  /** 获取被包装的组件实例 */
+  getOptions: () => getOptions.value,
+  getValue: () => modelValue.value,
   getComponentRef: <T = any,>() => componentRef.value as T,
-  /** 更新Api参数 */
   updateParam(newParams: Record<string, any>) {
     innerParams.value = newParams;
   },
+  clearSearch() {
+    searchTerm.value = '';
+  },
+  getCreatedOptions: () => createdOptions.value,
+  clearCreatedOptions() {
+    createdOptions.value = [];
+  },
+  setCreatedOptions(options: OptionsItem[]) {
+    createdOptions.value = options;
+  },
 });
 </script>
+
 <template>
-  <component
-    :is="component"
-    v-bind="bindProps"
-    :placeholder="$attrs.placeholder"
-    ref="componentRef"
-  >
+  <component :is="component" ref="componentRef" v-bind="bindProps">
     <template v-for="item in Object.keys($slots)" #[item]="data">
       <slot :name="item" v-bind="data || {}"></slot>
     </template>
+
     <template v-if="loadingSlot && loading" #[loadingSlot]>
       <LoaderCircle class="animate-spin" />
     </template>

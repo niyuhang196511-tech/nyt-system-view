@@ -1,24 +1,18 @@
 <script setup lang="ts">
-import type { SupportedLanguagesType } from '@vben/locales';
-
-import type { SiteProductCategoryAPI } from '#/api/site/productCategory';
+import type { SiteProduct } from '#/api/site/product';
 
 import { computed, ref, useTemplateRef } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
+import { $t } from '@vben/locales';
 
 import { message, Tabs } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
-import {
-  createProductCategory,
-  getProductCategory,
-  updateProductCategory,
-} from '#/api/site/productCategory';
-import { $t } from '#/locales';
+import { createProduct, getProduct, updateProduct } from '#/api/site/product';
 
-import { useModelFormSchema } from '../data';
-import LangForm from './lang-form.vue';
+import { useModalFormSchema } from '../data';
+import Lang from './lang.vue';
 
 interface Emit {
   (e: 'success'): void;
@@ -26,18 +20,11 @@ interface Emit {
 
 const emit = defineEmits<Emit>();
 
-const tabsName = ref<SupportedLanguagesType>('zh-CN');
+type LangInstance = InstanceType<typeof Lang>;
+const zhCNLangInstance = useTemplateRef<LangInstance>('zhCNLangInstance');
+const enUSLangInstance = useTemplateRef<LangInstance>('enUSLangInstance');
 
-type LangFormInstance = InstanceType<typeof LangForm>;
-const zhCNFormRef = useTemplateRef<LangFormInstance>('zhCNFormRef');
-const enUSFormRef = useTemplateRef<LangFormInstance>('enUSFormRef');
-
-const formData = ref<SiteProductCategoryAPI.ProductCategory>();
-const getTitle = computed(() => {
-  return formData.value?.id
-    ? $t('ui.actionTitle.edit', ['产品分类'])
-    : $t('ui.actionTitle.create', ['产品分类']);
-});
+const formData = ref<SiteProduct.Product>();
 
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -48,8 +35,16 @@ const [Form, formApi] = useVbenForm({
     labelWidth: 80,
   },
   layout: 'horizontal',
-  schema: useModelFormSchema(),
+  schema: useModalFormSchema(),
   showDefaultActions: false,
+});
+
+const tabsName = ref('zh-CN');
+
+const getTitle = computed(() => {
+  return formData.value?.id
+    ? $t('ui.actionTitle.edit', ['产品'])
+    : $t('ui.actionTitle.create', ['产品']);
 });
 
 const [Modal, modalApi] = useVbenModal({
@@ -59,36 +54,34 @@ const [Modal, modalApi] = useVbenModal({
     if (!valid) return;
 
     // zhCN表单校验
-    const zhCNValid = await zhCNFormRef.value?.validate();
+    const zhCNValid = await zhCNLangInstance.value?.validate();
     if (!zhCNValid) {
       tabsName.value = 'zh-CN';
       return;
     }
 
     // enUS表单校验
-    const enUSValid = await enUSFormRef.value?.validate();
+    const enUSValid = await enUSLangInstance.value?.validate();
     if (!enUSValid) {
       tabsName.value = 'en-US';
       return;
     }
 
-    modalApi.lock();
-
     // 主表数据
-    const data =
-      (await formApi.getValues()) as SiteProductCategoryAPI.ProductCategory;
+    const data = (await formApi.getValues()) as SiteProduct.Product;
 
     if (!data.langs) data.langs = [];
-    // 子表数据
+
+    // 子数据
     data.langs[0] =
-      (await zhCNFormRef.value?.getValues()) as SiteProductCategoryAPI.ProductCategoryLang;
+      (await zhCNLangInstance.value?.getValues()) as SiteProduct.ProductLang;
     data.langs[1] =
-      (await enUSFormRef.value?.getValues()) as SiteProductCategoryAPI.ProductCategoryLang;
+      (await enUSLangInstance.value?.getValues()) as SiteProduct.ProductLang;
+
+    modalApi.lock();
 
     try {
-      await (formData.value?.id
-        ? updateProductCategory(data)
-        : createProductCategory(data));
+      await (formData.value?.id ? updateProduct(data) : createProduct(data));
 
       // 关闭并提示
       await modalApi.close();
@@ -103,44 +96,44 @@ const [Modal, modalApi] = useVbenModal({
       formData.value = undefined;
       return;
     }
+
     // 加载数据
-    let data = modalApi.getData<SiteProductCategoryAPI.ProductCategory>();
+    let data = modalApi.getData<SiteProduct.Product>();
     if (!data) return;
     if (data.id) {
       modalApi.lock();
       try {
-        data = await getProductCategory(data.id);
+        data = await getProduct(data.id);
       } finally {
         modalApi.unlock();
       }
     }
+
     formData.value = data;
 
     await formApi.setValues(data);
 
     if (data.langs) {
       const zhCNLang = data.langs.find((lang) => lang.lang === 'zh-CN');
-      if (zhCNLang) {
-        await zhCNFormRef.value?.setValues(zhCNLang);
-      }
+      if (zhCNLang) await zhCNLangInstance.value.setValues(zhCNLang);
+
       const enUSLang = data.langs.find((lang) => lang.lang === 'en-US');
-      if (enUSLang) {
-        await enUSFormRef.value?.setValues(enUSLang);
-      }
+      if (enUSLang) await enUSLangInstance.value.setValues(enUSLang);
     }
   },
 });
 </script>
 
 <template>
-  <Modal :title="getTitle">
+  <Modal :title="getTitle" class="w-1/3">
     <Form class="mx-4" />
+
     <Tabs v-model:active-key="tabsName" animated centered>
       <Tabs.TabPane key="zh-CN" tab="中文" force-render>
-        <LangForm lang="zh-CN" ref="zhCNFormRef" />
+        <Lang lang="zh-CN" ref="zhCNLangInstance" />
       </Tabs.TabPane>
       <Tabs.TabPane key="en-US" tab="English" force-render>
-        <LangForm lang="en-US" ref="enUSFormRef" />
+        <Lang lang="en-US" ref="enUSLangInstance" />
       </Tabs.TabPane>
     </Tabs>
   </Modal>

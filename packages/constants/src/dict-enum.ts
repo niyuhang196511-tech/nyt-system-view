@@ -37,6 +37,7 @@ const INFRA_DICT = {
   INFRA_CODEGEN_SCENE: 'infra_codegen_scene',
   INFRA_FILE_STORAGE: 'infra_file_storage',
   INFRA_OPERATE_TYPE: 'infra_operate_type',
+  INFRA_STORAGE_S3_CLIENT: 'infra_storage_s3_client',
 } as const;
 
 /** ========== BPM - 工作流模块 ========== */

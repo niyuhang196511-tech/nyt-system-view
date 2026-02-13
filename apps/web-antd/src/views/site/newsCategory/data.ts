@@ -11,6 +11,15 @@ import { getRangePickerDefaultProps } from '#/utils';
 export function useGridFormSchema(): VbenFormSchema[] {
   return [
     {
+      fieldName: 'name',
+      label: '分类名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入分类名称',
+        clearable: true,
+      },
+    },
+    {
       fieldName: 'createTime',
       label: '创建时间',
       component: 'RangePicker',

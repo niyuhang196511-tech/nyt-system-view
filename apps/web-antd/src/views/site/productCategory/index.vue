@@ -12,6 +12,7 @@ import {
   deleteProductCategory,
   getProductCategoryList,
 } from '#/api/site/productCategory';
+import { productCategoryListToVOList } from '#/views/site/productCategory/utils';
 
 import { useGridColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
@@ -38,16 +39,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
             ...formValues,
           });
 
-          // 处理多语言名称显示
-          data.list = data.list.map((c) => {
-            if (c.langs && c.langs.length > 1) {
-              const zhCN = c.langs.find((l) => l.lang === 'zh-CN');
-              const enUS = c.langs.find((l) => l.lang === 'en-US');
-              c.zhCN_name = zhCN?.name ?? '';
-              c.enUS_name = enUS?.name ?? '';
-            }
-            return c;
-          });
+          data.list = productCategoryListToVOList(data.list);
 
           return data;
         },
