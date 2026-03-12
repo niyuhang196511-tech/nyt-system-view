@@ -3,12 +3,16 @@ import type { PageParam, PageResult } from '@vben/request';
 
 import { requestClient } from '#/api/request';
 
-export namespace SiteProduct {
+export namespace SiteProductAPI {
+  export type OperatingState = 0 | 1;
+  export type ProductRecommend = 0 | 1;
+
   export interface Product {
     id: number; // 产品ID
     sort: number; // 排序字段
     categoryId: number; // 分类ID
-    recommend: boolean; // 是否推荐
+    recommend: ProductRecommend; // 是否推荐
+    state: OperatingState; // 产品状态
     langs: ProductLang[]; // 多语言数据
   }
 
@@ -43,6 +47,8 @@ export namespace SiteProduct {
   }
 
   export type ProductUpdateRecommend = Pick<Product, 'id' | 'recommend'>;
+
+  export type ProductUpdateState = Pick<Product, 'id' | 'state'>;
 }
 
 const PRODUCT_BASE_URL = '/site/product';
@@ -52,7 +58,7 @@ const PRODUCT_BASE_URL = '/site/product';
  * @param params 查询参数
  */
 export function getProductList(params: PageParam) {
-  return requestClient.get<PageResult<SiteProduct.Product>>(
+  return requestClient.get<PageResult<SiteProductAPI.Product>>(
     `${PRODUCT_BASE_URL}/list`,
     { params },
   );
@@ -63,14 +69,14 @@ export function getProductList(params: PageParam) {
  * @param id
  */
 export function getProduct(id: number) {
-  return requestClient.get<SiteProduct.Product>(`${PRODUCT_BASE_URL}/${id}`);
+  return requestClient.get<SiteProductAPI.Product>(`${PRODUCT_BASE_URL}/${id}`);
 }
 
 /**
  * 新增产品信息
  * @param data
  */
-export function createProduct(data: SiteProduct.Product) {
+export function createProduct(data: SiteProductAPI.Product) {
   return requestClient.post(PRODUCT_BASE_URL, data);
 }
 
@@ -78,7 +84,7 @@ export function createProduct(data: SiteProduct.Product) {
  * 修改产品信息
  * @param data
  */
-export function updateProduct(data: SiteProduct.Product) {
+export function updateProduct(data: SiteProductAPI.Product) {
   return requestClient.put(PRODUCT_BASE_URL, data);
 }
 
@@ -95,7 +101,15 @@ export function deleteProduct(id: number) {
  * @param data 产品信息
  */
 export function updateProductRecommend(
-  data: SiteProduct.ProductUpdateRecommend,
+  data: SiteProductAPI.ProductUpdateRecommend,
 ) {
   return requestClient.put(`${PRODUCT_BASE_URL}/recommend`, data);
+}
+
+/**
+ * 更新产品状态
+ * @param data 产品信息
+ */
+export function updateProductState(data: SiteProductAPI.ProductUpdateState) {
+  return requestClient.put(`${PRODUCT_BASE_URL}/state`, data);
 }

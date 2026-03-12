@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ActionItem } from '#/adapter/vxe-table';
-import type { SiteProduct } from '#/api/site/product';
+import type { SiteProductAPI } from '#/api/site/product';
 
 import { IconifyIcon } from '@vben/icons';
 
@@ -35,15 +35,15 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 /** 添加产品特点 */
 async function handleAdd() {
-  await gridApi.grid.insertAt({} as SiteProduct.Characteristic, -1);
+  await gridApi.grid.insertAt({} as SiteProductAPI.Characteristic, -1);
 }
 
 /** 删除产品特点 */
-async function handleDelete(row: SiteProduct.Characteristic) {
+async function handleDelete(row: SiteProductAPI.Characteristic) {
   await gridApi.grid.remove(row);
 }
 
-function getActions(row: SiteProduct.Characteristic): ActionItem[] {
+function getActions(row: SiteProductAPI.Characteristic): ActionItem[] {
   return [
     {
       label: $t('common.delete'),
@@ -62,12 +62,12 @@ defineExpose({
   validate: async () => {
     return !(await gridApi.grid.validate(true));
   },
-  getData: (): SiteProduct.Characteristic[] => {
-    const data = gridApi.grid.getData() as SiteProduct.Characteristic[];
+  getData: (): SiteProductAPI.Characteristic[] => {
+    const data = gridApi.grid.getData() as SiteProductAPI.Characteristic[];
     const removeRecords =
-      gridApi.grid.getRemoveRecords() as SiteProduct.Characteristic[];
+      gridApi.grid.getRemoveRecords() as SiteProductAPI.Characteristic[];
     const insertRecords =
-      gridApi.grid.getInsertRecords() as SiteProduct.Characteristic[];
+      gridApi.grid.getInsertRecords() as SiteProductAPI.Characteristic[];
     return [
       ...data.filter(
         (row) => !removeRecords.some((removed) => removed.id === row.id),
@@ -75,7 +75,7 @@ defineExpose({
       ...insertRecords.map((row: any) => ({ ...row, id: undefined })),
     ];
   },
-  setData: (data: SiteProduct.Characteristic[]) => {
+  setData: (data: SiteProductAPI.Characteristic[]) => {
     return gridApi.grid.loadData(data);
   },
 });

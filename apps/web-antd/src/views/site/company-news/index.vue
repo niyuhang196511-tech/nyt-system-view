@@ -1,19 +1,19 @@
 <script setup lang="ts">
 import type { ActionItem, VxeTableGridOptions } from '#/adapter/vxe-table';
-import type { SiteNews } from '#/api/site/news';
+import type { SiteCompanyNews } from '#/api/site/company-news';
 
 import { Page, useVbenModal } from '@vben/common-ui';
 import { $t } from '@vben/locales';
 
-import { message, Switch, Tag } from 'ant-design-vue';
+import { message, Switch } from 'ant-design-vue';
 
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  deleteNews,
-  getNewsList,
-  updateNewsPublish,
-  updateNewsTop,
-} from '#/api/site/news';
+  deleteCompanyNews,
+  getCompanyNewsList,
+  updateCompanyNewsPublish,
+  updateCompanyNewsTop,
+} from '#/api/site/company-news';
 
 import { useGridColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
@@ -36,7 +36,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
-          return await getNewsList({
+          return await getCompanyNewsList({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
             ...formValues,
@@ -52,11 +52,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
       refresh: true,
       search: true,
     },
-  } as VxeTableGridOptions<SiteNews.NewsVO>,
+  } as VxeTableGridOptions<SiteCompanyNews.CompanyNews>,
 });
 
 /**
- * 刷新表格
+ * 刷新表格数据
  */
 function handleRefresh() {
   gridApi.query();
@@ -73,7 +73,7 @@ async function handleCreate() {
  * 修改新闻资讯
  * @param row 新闻资讯信息
  */
-async function handleEdit(row: SiteNews.NewsVO) {
+async function handleEdit(row: SiteCompanyNews.CompanyNews) {
   formModalApi.setData(row).open();
 }
 
@@ -81,13 +81,13 @@ async function handleEdit(row: SiteNews.NewsVO) {
  * 删除新闻资讯
  * @param row 新闻资讯信息
  */
-async function handleDelete(row: SiteNews.NewsVO) {
+async function handleDelete(row: SiteCompanyNews.CompanyNews) {
   const hideLoading = message.loading({
     content: $t('ui.actionMessage.deleting', [row.id]),
     duration: 0,
   });
   try {
-    await deleteNews(row.id!);
+    await deleteCompanyNews(row.id!);
     message.success($t('ui.actionMessage.deleteSuccess', [row.id]));
     handleRefresh();
   } finally {
@@ -101,15 +101,15 @@ async function handleDelete(row: SiteNews.NewsVO) {
  * @param state 发布状态
  */
 async function handlePublishChange(
-  row: SiteNews.News,
-  state: SiteNews.NewsPublish,
+  row: SiteCompanyNews.CompanyNews,
+  state: SiteCompanyNews.NewsPublish,
 ) {
   const hideLoading = message.loading({
     content: $t('ui.actionMessage.updating', [row.id]),
     duration: 0,
   });
   try {
-    await updateNewsPublish({ id: row.id!, publish: state });
+    await updateCompanyNewsPublish({ id: row.id!, publish: state });
     message.success($t('ui.actionMessage.updateSuccess', [row.id]));
     handleRefresh();
   } finally {
@@ -122,13 +122,16 @@ async function handlePublishChange(
  * @param row 新闻资讯信息
  * @param state 置顶状态
  */
-async function handleTopChange(row: SiteNews.News, state: SiteNews.NewsTop) {
+async function handleTopChange(
+  row: SiteCompanyNews.CompanyNews,
+  state: SiteCompanyNews.NewsTop,
+) {
   const hideLoading = message.loading({
     content: $t('ui.actionMessage.updating', [row.id]),
     duration: 0,
   });
   try {
-    await updateNewsTop({ id: row.id!, top: state });
+    await updateCompanyNewsTop({ id: row.id!, top: state });
     message.success($t('ui.actionMessage.updateSuccess', [row.id]));
     handleRefresh();
   } finally {
@@ -144,7 +147,7 @@ const toolbarActions: ActionItem[] = [
     label: $t('ui.actionTitle.create', ['新闻资讯']),
     type: 'primary',
     icon: ACTION_ICON.ADD,
-    auth: ['site:news:create'],
+    auth: ['site:company-news:create'],
     onClick: handleCreate,
   },
 ];
@@ -153,13 +156,13 @@ const toolbarActions: ActionItem[] = [
  * 获取table动作
  * @param row
  */
-function getTableAction(row: SiteNews.NewsVO): ActionItem[] {
+function getTableAction(row: SiteCompanyNews.CompanyNews): ActionItem[] {
   return [
     {
       label: $t('common.edit'),
       type: 'link',
       icon: ACTION_ICON.EDIT,
-      auth: ['site:news:query', 'site:news:update'],
+      auth: ['site:company-news:query', 'site:company-news:update'],
       onClick: handleEdit.bind(null, row),
     },
     {
@@ -167,7 +170,7 @@ function getTableAction(row: SiteNews.NewsVO): ActionItem[] {
       type: 'link',
       danger: true,
       icon: ACTION_ICON.DELETE,
-      auth: ['site:news:delete'],
+      auth: ['site:company-news:delete'],
       popConfirm: {
         title: $t('ui.actionMessage.deleteConfirm', [row.id]),
         confirm: handleDelete.bind(null, row),
@@ -176,15 +179,15 @@ function getTableAction(row: SiteNews.NewsVO): ActionItem[] {
   ];
 }
 </script>
-
 <template>
   <Page auto-content-height>
     <FormModal @success="handleRefresh" />
 
-    <Grid table-title="新闻资讯列表">
+    <Grid table-title="公司新闻资讯列表">
       <template #toolbar-tools>
         <TableAction :actions="toolbarActions" />
       </template>
+
       <template #actions="{ row }">
         <TableAction :actions="getTableAction(row)" />
       </template>
@@ -195,7 +198,8 @@ function getTableAction(row: SiteNews.NewsVO): ActionItem[] {
           :checked-value="1"
           :un-checked-value="0"
           @change="
-            (state) => handlePublishChange(row, state as SiteNews.NewsPublish)
+            (state) =>
+              handlePublishChange(row, state as SiteCompanyNews.NewsPublish)
           "
         />
       </template>
@@ -205,14 +209,10 @@ function getTableAction(row: SiteNews.NewsVO): ActionItem[] {
           v-model:checked="row.top"
           :checked-value="1"
           :un-checked-value="0"
-          @change="(state) => handleTopChange(row, state as SiteNews.NewsTop)"
+          @change="
+            (state) => handleTopChange(row, state as SiteCompanyNews.NewsTop)
+          "
         />
-      </template>
-
-      <template #tags="{ row }">
-        <template v-for="tag in row.tags" :key="tag.id">
-          <Tag color="processing">{{ tag.name }}</Tag>
-        </template>
       </template>
     </Grid>
   </Page>

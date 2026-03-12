@@ -127,7 +127,7 @@ const initOptions = computed((): InitOptions => {
     skin: skinName.value,
     content_css: contentCss.value,
     content_style:
-      'body { font-family:Helvetica,Arial,sans-serif; font-size:16px }',
+      'body { font-family:Helvetica,Arial,sans-serif; font-size:1rem }',
     contextmenu: 'link image table',
     image_advtab: true, // 图片高级选项
     image_caption: true,

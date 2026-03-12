@@ -4,10 +4,15 @@ import type { PageParam, PageResult } from '@vben/request';
 import { requestClient } from '#/api/request';
 
 export namespace SiteNewsCategoryAPI {
+  export type OperatingState = 0 | 1;
+
   export interface NewsCategory {
     id: number;
+    sort: number;
+    state: OperatingState;
     langs: NewsCategoryLang[];
-    // 拓展以下两个字段 用于表格展示
+    // 拓展字段 用于表格展示
+    name?: string;
   }
 
   export interface NewsCategoryVO extends NewsCategory {
@@ -20,6 +25,8 @@ export namespace SiteNewsCategoryAPI {
     name: string;
     description: string;
   }
+
+  export type NewsCategoryUpdateState = Pick<NewsCategory, 'id' | 'state'>;
 }
 
 const NEWS_CATEGORY_BASE_URL = '/site/news-category';
@@ -76,4 +83,14 @@ export function updateNewsCategory(data: SiteNewsCategoryAPI.NewsCategory) {
  */
 export function deleteNewsCategory(id: number) {
   return requestClient.delete(`${NEWS_CATEGORY_BASE_URL}/${id}`);
+}
+
+/**
+ * 修改新闻资讯分类状态
+ * @param data 分类状态数据
+ */
+export function updateNewsCategoryState(
+  data: SiteNewsCategoryAPI.NewsCategoryUpdateState,
+) {
+  return requestClient.put(`${NEWS_CATEGORY_BASE_URL}/state`, data);
 }

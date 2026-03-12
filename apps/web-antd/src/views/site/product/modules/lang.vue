@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { SupportedLanguagesType } from '@vben/locales';
 
-import type { SiteProduct } from '#/api/site/product';
+import type { SiteProductAPI } from '#/api/site/product';
 
 import { useTemplateRef } from 'vue';
 
@@ -50,14 +50,14 @@ defineExpose({
     return true;
   },
   getValues: async () => {
-    const data = (await formApi.getValues()) as SiteProduct.ProductLang;
+    const data = (await formApi.getValues()) as SiteProductAPI.ProductLang;
     const videos = videoInstance.value!.getData();
     const characteristics = characteristicInstance.value!.getData();
     data.videos = videos;
     data.characteristics = characteristics;
     return data;
   },
-  setValues: async (data: SiteProduct.ProductLang) => {
+  setValues: async (data: SiteProductAPI.ProductLang) => {
     await formApi.setValues(data);
     await videoInstance.value?.setData(data.videos || []);
     await characteristicInstance.value?.setData(data.characteristics || []);

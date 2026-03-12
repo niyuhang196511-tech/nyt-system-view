@@ -4,8 +4,11 @@ import type { PageParam, PageResult } from '@vben/request';
 import { requestClient } from '#/api/request';
 
 export namespace SiteProductCategoryAPI {
+  export type OperatingState = 0 | 1;
   export interface ProductCategory {
     id: number;
+    sort: number;
+    state: OperatingState;
     langs: ProductCategoryLang[];
     // 拓展以下两个字段 用于表格展示
   }
@@ -80,4 +83,11 @@ export function updateProductCategory(
  */
 export function deleteProductCategory(id: number) {
   return requestClient.delete(`${PRODUCT_CATEGORY_BASE_URL}/${id}`);
+}
+
+export function updateProductCategoryState(id: number, state: 0 | 1) {
+  return requestClient.put(`${PRODUCT_CATEGORY_BASE_URL}/state`, {
+    id,
+    state,
+  });
 }

@@ -64,7 +64,6 @@ function beforeUpload(file: FileType) {
           <Upload.Dragger
             name="file"
             :max-count="1"
-            accept=".jpg,.png,.gif,.webp"
             :before-upload="beforeUpload"
             list-type="picture-card"
           >
@@ -72,9 +71,7 @@ function beforeUpload(file: FileType) {
               <span class="icon-[ant-design--inbox-outlined] text-2xl"></span>
             </p>
             <p class="ant-upload-text">点击或拖拽文件到此区域上传</p>
-            <p class="ant-upload-hint">
-              支持 .jpg、.png、.gif、.webp 格式图片文件
-            </p>
+            <p class="ant-upload-hint">支持多种文件上传</p>
           </Upload.Dragger>
         </div>
       </template>

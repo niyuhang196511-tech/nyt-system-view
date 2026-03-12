@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ActionItem } from '#/adapter/vxe-table';
-import type { SiteProduct } from '#/api/site/product';
+import type { SiteProductAPI } from '#/api/site/product';
 
 import { IconifyIcon } from '@vben/icons';
 
@@ -37,15 +37,15 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 /** 添加产品视频 */
 async function handleAdd() {
-  await gridApi.grid.insertAt({} as SiteProduct.Video, -1);
+  await gridApi.grid.insertAt({} as SiteProductAPI.Video, -1);
 }
 
 /** 删除产品视频 */
-async function handleDelete(row: SiteProduct.Video) {
+async function handleDelete(row: SiteProductAPI.Video) {
   await gridApi.grid.remove(row);
 }
 
-function getActions(row: SiteProduct.Video): ActionItem[] {
+function getActions(row: SiteProductAPI.Video): ActionItem[] {
   return [
     {
       label: $t('common.delete'),
@@ -64,12 +64,12 @@ defineExpose({
   validate: async () => {
     return !(await gridApi.grid.validate(true));
   },
-  getData: (): SiteProduct.Video[] => {
-    const data = gridApi.grid.getData() as SiteProduct.Video[];
+  getData: (): SiteProductAPI.Video[] => {
+    const data = gridApi.grid.getData() as SiteProductAPI.Video[];
     const removeRecords =
-      gridApi.grid.getRemoveRecords() as SiteProduct.Video[];
+      gridApi.grid.getRemoveRecords() as SiteProductAPI.Video[];
     const insertRecords =
-      gridApi.grid.getInsertRecords() as SiteProduct.Video[];
+      gridApi.grid.getInsertRecords() as SiteProductAPI.Video[];
     return [
       ...data.filter(
         (row) => !removeRecords.some((removed) => removed.id === row.id),
@@ -77,7 +77,7 @@ defineExpose({
       ...insertRecords.map((row: any) => ({ ...row, id: undefined })),
     ];
   },
-  setData: async (data: SiteProduct.Video[]) => {
+  setData: async (data: SiteProductAPI.Video[]) => {
     await gridApi.grid.loadData(data);
   },
 });

@@ -173,6 +173,14 @@ const IOT_DICT = {
   IOT_VALIDATE_TYPE: 'iot_validate_type', // IOT 数据校验级别
 } as const;
 
+/** ========== Site - 站点管理模块 ========== */
+const SITE_DICT = {
+  SITE_LANGUAGE: 'site_language', // 站点语言
+  SITE_OPERATION_STATE: 'site_operation_state', // 站点操作状态`
+  SITE_NEWS_PUBLISH: 'site_news_publish', // 新闻发布状态
+  SITE_NEWS_TOP: 'site_news_top', // 新闻置顶状态
+} as const;
+
 /** 字典类型枚举 - 统一导出 */
 const DICT_TYPE = {
   ...AI_DICT,
@@ -186,6 +194,7 @@ const DICT_TYPE = {
   ...PAY_DICT,
   ...MALL_DICT,
   ...SYSTEM_DICT,
+  ...SITE_DICT,
   ...COMMON_DICT,
 } as const;
 

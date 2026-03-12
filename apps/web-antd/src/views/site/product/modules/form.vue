@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { SiteProduct } from '#/api/site/product';
+import type { SiteProductAPI } from '#/api/site/product';
 
 import { computed, ref, useTemplateRef } from 'vue';
 
@@ -24,7 +24,7 @@ type LangInstance = InstanceType<typeof Lang>;
 const zhCNLangInstance = useTemplateRef<LangInstance>('zhCNLangInstance');
 const enUSLangInstance = useTemplateRef<LangInstance>('enUSLangInstance');
 
-const formData = ref<SiteProduct.Product>();
+const formData = ref<SiteProductAPI.Product>();
 
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -68,15 +68,15 @@ const [Modal, modalApi] = useVbenModal({
     }
 
     // 主表数据
-    const data = (await formApi.getValues()) as SiteProduct.Product;
+    const data = (await formApi.getValues()) as SiteProductAPI.Product;
 
     if (!data.langs) data.langs = [];
 
     // 子数据
     data.langs[0] =
-      (await zhCNLangInstance.value?.getValues()) as SiteProduct.ProductLang;
+      (await zhCNLangInstance.value?.getValues()) as SiteProductAPI.ProductLang;
     data.langs[1] =
-      (await enUSLangInstance.value?.getValues()) as SiteProduct.ProductLang;
+      (await enUSLangInstance.value?.getValues()) as SiteProductAPI.ProductLang;
 
     modalApi.lock();
 
@@ -98,7 +98,7 @@ const [Modal, modalApi] = useVbenModal({
     }
 
     // 加载数据
-    let data = modalApi.getData<SiteProduct.Product>();
+    let data = modalApi.getData<SiteProductAPI.Product>();
     if (!data) return;
     if (data.id) {
       modalApi.lock();

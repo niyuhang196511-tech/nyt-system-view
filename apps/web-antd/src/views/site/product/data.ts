@@ -3,6 +3,9 @@ import type { VxeTableGridOptions } from '@vben/plugins/vxe-table';
 
 import type { VbenFormSchema } from '#/adapter/form';
 
+import { DICT_TYPE } from '@vben/constants';
+import { getDictOptions } from '@vben/hooks';
+
 import { getProductCategoryAll } from '#/api/site/productCategory';
 import { getRangePickerDefaultProps } from '#/utils';
 import { productCategoryListToVOList } from '#/views/site/productCategory/utils';
@@ -71,9 +74,15 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
     },
     {
       field: 'recommend',
-      title: '置顶状态',
+      title: '推荐状态',
       minWidth: 150,
       slots: { default: 'recommend' },
+    },
+    {
+      field: 'state',
+      title: '启用状态',
+      minWidth: 150,
+      slots: { default: 'state' },
     },
     {
       title: '操作',
@@ -117,6 +126,7 @@ export function useModalFormSchema(): VbenFormSchema[] {
       componentProps: {
         placeholder: '请输入排序',
       },
+      defaultValue: 0,
     },
     {
       fieldName: 'recommend',
@@ -126,7 +136,23 @@ export function useModalFormSchema(): VbenFormSchema[] {
       help: '推荐的产品',
       componentProps: {
         class: 'w-auto',
+        checkedValue: 1,
+        unCheckedValue: 0,
       },
+      defaultValue: 0,
+    },
+    {
+      fieldName: 'state',
+      label: '状态',
+      component: 'RadioGroup',
+      help: '状态用于控制分类的启用或禁用',
+      componentProps: {
+        options: getDictOptions(DICT_TYPE.SITE_OPERATION_STATE, 'number'),
+        buttonStyle: 'solid',
+        optionType: 'button',
+      },
+      defaultValue: 0,
+      rules: 'required',
     },
   ];
 }
@@ -188,7 +214,7 @@ export function useLangFormSchema(
     {
       fieldName: 'heroVideo',
       label: '首屏视频',
-      rules: 'required',
+      // rules: 'required',
       component: 'FileUpload',
       componentProps: {
         maxNumber: 1,
@@ -199,7 +225,7 @@ export function useLangFormSchema(
     {
       fieldName: 'colorPage',
       label: '彩页',
-      rules: 'required',
+      // rules: 'required',
       component: 'ImageUpload',
       componentProps: {
         maxNumber: 1,

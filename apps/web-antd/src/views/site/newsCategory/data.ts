@@ -3,6 +3,9 @@ import type { VxeTableGridOptions } from '@vben/plugins/vxe-table';
 
 import type { VbenFormSchema } from '#/adapter/form';
 
+import { DICT_TYPE } from '@vben/constants';
+import { getDictOptions } from '@vben/hooks';
+
 import { getRangePickerDefaultProps } from '#/utils';
 
 /**
@@ -46,7 +49,12 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       title: '分类名称',
       minWidth: 200,
     },
-
+    {
+      field: 'state',
+      title: '启用状态',
+      minWidth: 150,
+      slots: { default: 'state' },
+    },
     {
       title: '操作',
       width: 200,
@@ -78,6 +86,19 @@ export function useModelFormSchema(): VbenFormSchema[] {
       componentProps: {
         placeholder: '请输入排序',
       },
+    },
+    {
+      fieldName: 'state',
+      label: '状态',
+      component: 'RadioGroup',
+      help: '状态用于控制分类的启用或禁用',
+      componentProps: {
+        options: getDictOptions(DICT_TYPE.SITE_OPERATION_STATE, 'number'),
+        buttonStyle: 'solid',
+        optionType: 'button',
+      },
+      defaultValue: 0,
+      rules: 'required',
     },
   ];
 }

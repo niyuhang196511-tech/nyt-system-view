@@ -5,10 +5,7 @@ import type { VbenFormSchema } from '#/adapter/form';
 import { DICT_TYPE } from '@vben/constants';
 import { getDictOptions } from '@vben/hooks';
 
-import { getNewsCategoryAll } from '#/api/site/newsCategory';
-import { getNewsTagAll } from '#/api/site/newsTag';
 import { getRangePickerDefaultProps } from '#/utils';
-import { newsCategoryListToVOList } from '#/views/site/newsCategory/utils';
 
 /**
  * 列表搜索表单
@@ -38,9 +35,9 @@ export function useGridFormSchema(): VbenFormSchema[] {
       label: '发布状态',
       component: 'Select',
       componentProps: {
+        options: getDictOptions(DICT_TYPE.SITE_NEWS_PUBLISH, 'number'),
         placeholder: '请选择发布状态',
         allowClear: true,
-        options: getDictOptions(DICT_TYPE.SITE_NEWS_PUBLISH, 'number'),
       },
     },
     {
@@ -48,9 +45,9 @@ export function useGridFormSchema(): VbenFormSchema[] {
       label: '置顶状态',
       component: 'Select',
       componentProps: {
+        options: getDictOptions(DICT_TYPE.SITE_NEWS_TOP, 'number'),
         placeholder: '请选择置顶状态',
         allowClear: true,
-        options: getDictOptions(DICT_TYPE.SITE_NEWS_TOP, 'number'),
       },
     },
     {
@@ -84,13 +81,13 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       field: 'title',
       title: '新闻标题',
       minWidth: 200,
-      showOverflow: true,
+      showFooterOverflow: true,
     },
     {
       field: 'subtitle',
-      title: '副标题',
+      title: '新闻副标题',
       minWidth: 200,
-      showOverflow: true,
+      showFooterOverflow: true,
     },
     {
       field: 'author',
@@ -110,23 +107,12 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       slots: { default: 'topStatus' },
     },
     {
-      field: 'tags',
-      title: '标签',
-      minWidth: 200,
-      slots: { default: 'tags' },
-    },
-    {
       title: '操作',
-      width: 200,
       fixed: 'right',
+      width: 200,
       slots: { default: 'actions' },
     },
   ];
-}
-
-async function getNewsCategories() {
-  const categories = await getNewsCategoryAll();
-  return newsCategoryListToVOList(categories);
 }
 
 export function useModelFormSchema(): VbenFormSchema[] {
@@ -148,21 +134,6 @@ export function useModelFormSchema(): VbenFormSchema[] {
         placeholder: '请选择语言',
         allowClear: true,
       },
-      rules: 'required',
-    },
-    {
-      fieldName: 'categoryId',
-      component: 'ApiSelect',
-      label: '新闻分类',
-      componentProps: {
-        api: getNewsCategories,
-        labelField: 'name',
-        valueField: 'id',
-        placeholder: '请选择新闻分类',
-        allowClear: true,
-        showSearch: true,
-      },
-      rules: 'required',
     },
     {
       fieldName: 'title',
@@ -223,29 +194,6 @@ export function useModelFormSchema(): VbenFormSchema[] {
       label: '新闻内容',
       componentProps: {
         style: { width: '100%' },
-      },
-      rules: 'required',
-    },
-    {
-      fieldName: 'tags',
-      component: 'ApiSelect',
-      label: '标签',
-      componentProps: {
-        api: getNewsTagAll,
-        labelField: 'name',
-        valueField: 'name',
-        placeholder: '请选择标签',
-        allowClear: true,
-        showSearch: true,
-        mode: 'multiple',
-        allowCreate: true,
-        createOption: (searchTerm: string) => {
-          searchTerm = searchTerm.trim();
-          if (searchTerm) {
-            return { label: searchTerm, value: searchTerm };
-          }
-          return null;
-        },
       },
       rules: 'required',
     },

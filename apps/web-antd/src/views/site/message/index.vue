@@ -3,8 +3,9 @@ import type { ActionItem, VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { SiteMessage } from '#/api/site/message';
 
 import { Page } from '@vben/common-ui';
+import { $t } from '@vben/locales';
 
-import { Tag } from 'ant-design-vue';
+import { message, Tag } from 'ant-design-vue';
 
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import { disposeMessage, getMessageList } from '#/api/site/message';
@@ -49,29 +50,21 @@ function handleRefresh() {
 }
 
 /**
- * 删除新闻资讯
+ * 处理状态变更
  * @param row 新闻资讯信息
- */
-// async function handleDelete(row: SiteNews.NewsVO) {
-//   const hideLoading = message.loading({
-//     content: $t('ui.actionMessage.deleting', [row.id]),
-//     duration: 0,
-//   });
-//   try {
-//     await deleteNews(row.id!);
-//     message.success($t('ui.actionMessage.deleteSuccess', [row.id]));
-//     handleRefresh();
-//   } finally {
-//     hideLoading();
-//   }
-// }
-
-/**
- * 发布状态变更
- * @param row 新闻资讯信息
- * @param state 发布状态
  */
 async function handleDisposeMessage(row: SiteMessage.Message) {
+  const hideLoading = message.loading({
+    content: $t('ui.actionMessage.updating', [row.id]),
+    duration: 0,
+  });
+  try {
+    await disposeMessage(row.id!);
+    message.success($t('ui.actionMessage.updateSuccess', [row.id]));
+    handleRefresh();
+  } finally {
+    hideLoading();
+  }
   await disposeMessage(row.id!);
   handleRefresh();
 }
@@ -88,8 +81,10 @@ function getTableAction(row: SiteMessage.Message): ActionItem[] {
       label: '处理留言',
       type: 'link',
       icon: ACTION_ICON.EDIT,
-      onClick: () => {
-        handleDisposeMessage.bind(null, row);
+      auth: ['site:message:update'],
+      popConfirm: {
+        title: '是否标记为已处理？',
+        confirm: handleDisposeMessage.bind(null, row),
       },
     });
   }

@@ -3,16 +3,19 @@ import type { PageParam, PageResult } from '@vben/request';
 import { requestClient } from '#/api/request';
 
 export namespace SiteNews {
+  export type NewsPublish = 0 | 1;
+  export type NewsTop = 0 | 1;
+
   export interface News {
     id: number;
     title: string;
     subtitle: string;
-    date: string;
+    date: number | string;
     author: string;
     cover: string;
     contentHtml: string;
-    publish: boolean;
-    top: boolean;
+    publish: NewsPublish;
+    top: NewsTop;
     categoryId: number;
   }
 

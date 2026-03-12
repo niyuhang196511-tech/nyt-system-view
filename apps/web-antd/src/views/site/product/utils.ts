@@ -1,14 +1,14 @@
-import type { SiteProduct } from '#/api/site/product';
+import type { SiteProductAPI } from '#/api/site/product';
 
 /**
  * 产品列表转换为VO列表
  * @param list
  */
 export function productListToVOList(
-  list: Array<SiteProduct.Product>,
-): Array<SiteProduct.ProductVO> {
+  list: Array<SiteProductAPI.Product>,
+): Array<SiteProductAPI.ProductVO> {
   return list.map((product) => {
-    const productVO: SiteProduct.ProductVO = {
+    const productVO: SiteProductAPI.ProductVO = {
       ...product,
     };
 
